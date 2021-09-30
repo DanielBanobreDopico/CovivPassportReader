@@ -1,5 +1,20 @@
 <script>
 	export let name;
+	//import QRScanner from 'qr-code-scanner';
+
+	var QRScanner
+
+	require(['qr-code-scanner'], obj => QRScanner = obj )
+
+	function QRHandler(qrContent) {
+		console.log(qrContent)
+	}
+
+	QRScanner.initiate({
+        onResult: (result) => { QRHandler(result); },
+        timeout: 10000,
+    });
+
 </script>
 
 <main>
