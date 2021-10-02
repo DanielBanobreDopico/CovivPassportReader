@@ -4,10 +4,57 @@
   import { onMount } from "svelte";
 
 	import jsQR from "jsqr";
+
+  import base45 from 'base45-js';
   
 	var status = 'Mounting...';
 
   var video, canvasElement, canvas;
+
+  function divmod(a,b) {
+    var remainder = a
+    var quotient = 0
+    if (a >= b) {
+      remainder = a % b
+    	quotient = (a - remainder) / b
+    }
+    return [ quotient, remainder ]
+  }
+
+  /* var fromCharCode = function fromCharCode(c) {
+    return BASE45_CHARSET.charAt(c);
+  }; */
+
+  function base45decode(str) {
+    const BASE45_CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:"
+    var output = []
+    var buf = []
+
+    for(var i = 0, length=str.length; i < length; i++) {
+       var j = BASE45_CHARSET.indexOf(str[i])
+       if (j < 0)
+              throw new Error('Base45 decode: unknown character');
+       buf.push(j)
+    }
+
+    for(var i = 0, length=buf.length; i < length; i+=3) {
+       var x = buf[i] + buf[i + 1] * 45
+       if (length - i >= 3) {
+          var [d, c] = divmod(x + buf[i + 2] * 45 * 45,256)
+          output.push(d)
+          output.push(c)
+       } else {
+         output.push(x)
+       }
+    }
+    //return Buffer.from(output);
+    var buffer = new ArrayBuffer(output.length);
+    var bufferView = new Uint8Array(buffer);
+    output.forEach(
+      (num,idx) => bufferView[idx] = num
+    )
+    return buffer
+  };
 
   function tick() {
     status = "⌛ Loading video..."
@@ -20,7 +67,8 @@
         inversionAttempts: "dontInvert",
       });
       if (code) {
-        status = code.data;
+        status = base45decode(code.data).toString();
+        status
         console.log('QR code!')
       }
     }
@@ -42,6 +90,8 @@
       });
     }
   )
+
+
 
 </script>
 
