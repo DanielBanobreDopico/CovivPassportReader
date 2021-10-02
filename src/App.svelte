@@ -1,25 +1,55 @@
 <script>
 	export let name;
-	//import QRScanner from 'qr-code-scanner';
 
-	var QRScanner
+  import { onMount } from "svelte";
 
-	require(['qr-code-scanner'], obj => QRScanner = obj )
+	import jsQR from "jsqr";
+  
+	var status = 'Mounting...';
 
-	function QRHandler(qrContent) {
-		console.log(qrContent)
-	}
+  var video, canvasElement, canvas;
 
-	QRScanner.initiate({
-        onResult: (result) => { QRHandler(result); },
-        timeout: 10000,
-    });
+  function tick() {
+    status = "⌛ Loading video..."
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvasElement.height = video.videoHeight;
+      canvasElement.width = video.videoWidth;
+      canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+      var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+      var code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
+      if (code) {
+        status = code.data;
+        console.log('QR code!')
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  onMount(
+    () => {
+      video = document.getElementById("camView");
+      canvasElement = document.getElementById("canvas");
+      canvas = canvasElement.getContext("2d");
+
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) { // Use facingMode: environment to attemt to get the front camera on phones
+
+          video.srcObject = stream;
+          video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+          video.play();
+          requestAnimationFrame(tick);
+      });
+    }
+  )
 
 </script>
 
 <main>
 	<h1>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
+	<video id="camView"></video>
+	<canvas id="canvas" hidden></canvas>
+	<p>{status}</p>
 </main>
 
 <style>
