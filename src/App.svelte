@@ -5,8 +5,6 @@
 
 	import jsQR from "jsqr";
 
-  import base45 from 'base45-js';
-  
 	var status = 'Mounting...';
 
   var video, canvasElement, canvas;
