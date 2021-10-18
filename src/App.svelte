@@ -2,11 +2,10 @@
 	export let name;
 
   import { onMount } from "svelte";
-
 	import jsQR from "jsqr";
 
+  var noQR = true;
 	var status = 'Mounting...';
-
   var video, canvasElement, canvas;
 
   function divmod(a,b) {
@@ -54,11 +53,6 @@
          output.push(x)
        }
     }
-    /*var buffer = new ArrayBuffer(output.length);
-    var bufferView = new Uint8Array(buffer);
-    output.forEach(
-      (num,idx) => bufferView[idx] = num
-    )*/
     const buffer = toArrayBuffer(output)
     return buffer
   };
@@ -73,7 +67,7 @@
   }
 
   function tick() {
-    status = status == "Mounting..." ? "⌛ Loading video..." : status
+    if (noQR) status = "⌛ Loading video...";
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       canvasElement.height = video.videoHeight;
       canvasElement.width = video.videoWidth;
@@ -83,6 +77,7 @@
         inversionAttempts: "dontInvert",                                                                                                                                  
       });
       if (code) {
+        noQR = false;
         decode(code.data)
         console.log('QR code!')                                                                                                                                                                             
       }
@@ -105,21 +100,6 @@
       });
     }
   )
-
-
-/*   function tests() {
-    const buffer = base45decode(".QF14E5DC834-M6")
-    const int8array = new Int8Array(buffer)
-    const text = new TextDecoder().decode(int8array)  
-    console.log('A',buffer,int8array,text)
-
-    var initial = { Hello: "World" };
-    var encoded = CBOR.encode(initial);
-    var decoded = CBOR.decode(encoded);
-    console.log(decoded)
-  }
-  tests() */
-
 </script>
 
 <main>
