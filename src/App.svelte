@@ -23,6 +23,15 @@
     return BASE45_CHARSET.charAt(c);
   }; */
 
+  function toArrayBuffer(array){
+    const buffer = new ArrayBuffer(array.length);
+    const bufferView = new Uint8Array(buffer);
+    array.forEach(
+      (num,idx) => bufferView[idx] = num
+    )
+    return buffer
+  }
+
   function base45decode(str) {
     const BASE45_CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:"
     var output = []
@@ -45,29 +54,37 @@
          output.push(x)
        }
     }
-    //return Buffer.from(output);
-    var buffer = new ArrayBuffer(output.length);
+    /*var buffer = new ArrayBuffer(output.length);
     var bufferView = new Uint8Array(buffer);
     output.forEach(
       (num,idx) => bufferView[idx] = num
-    )
+    )*/
+    const buffer = toArrayBuffer(output)
     return buffer
   };
 
+
+  function decode(QRdata) {
+    const b45Decoded = new Uint8Array(base45decode(QRdata.slice(4)));
+    const inflated = pako.inflate(b45Decoded);
+    const nestedCbor = CBOR.decode(inflated.buffer);
+    const payload = CBOR.decode(toArrayBuffer(nestedCbor[2]))
+    status = JSON.stringify(payload)
+  }
+
   function tick() {
-    status = "⌛ Loading video..."
+    status = status == "Mounting..." ? "⌛ Loading video..." : status
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       canvasElement.height = video.videoHeight;
       canvasElement.width = video.videoWidth;
       canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
       var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
       var code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert",
+        inversionAttempts: "dontInvert",                                                                                                                                  
       });
       if (code) {
-        status = base45decode(code.data).toString();
-        status
-        console.log('QR code!')
+        decode(code.data)
+        console.log('QR code!')                                                                                                                                                                             
       }
     }
     requestAnimationFrame(tick);
@@ -90,6 +107,18 @@
   )
 
 
+/*   function tests() {
+    const buffer = base45decode(".QF14E5DC834-M6")
+    const int8array = new Int8Array(buffer)
+    const text = new TextDecoder().decode(int8array)  
+    console.log('A',buffer,int8array,text)
+
+    var initial = { Hello: "World" };
+    var encoded = CBOR.encode(initial);
+    var decoded = CBOR.decode(encoded);
+    console.log(decoded)
+  }
+  tests() */
 
 </script>
 
