@@ -1,6 +1,5 @@
 <script>
-	export let name;
-
+  
   import { onMount } from "svelte";
 	import jsQR from "jsqr";
 
